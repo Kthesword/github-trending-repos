@@ -1,5 +1,11 @@
 # trending-repos
 
+[![CI](https://github.com/Kthesword/github-trending-repos/actions/workflows/ci.yml/badge.svg)](https://github.com/Kthesword/github-trending-repos/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Kthesword/github-trending-repos)](https://github.com/Kthesword/github-trending-repos/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**Repository:** <https://github.com/Kthesword/github-trending-repos>
+
 A fast, dependency-light command-line tool, written in Go, that lists **trending public GitHub repositories** in your terminal. It uses the [GitHub REST Search API](https://docs.github.com/en/rest/search/search#search-repositories) and ranks results by star count.
 
 ```
@@ -44,7 +50,7 @@ This puts a `github-trending-repos` binary in `$(go env GOPATH)/bin`. Make sure 
 ### Option 2: Build from source
 
 ```bash
-git clone https://github.com/kthesword/github-trending-repos.git
+git clone https://github.com/Kthesword/github-trending-repos.git
 cd github-trending-repos
 go mod download
 ```
