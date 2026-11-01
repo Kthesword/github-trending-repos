@@ -28,7 +28,7 @@ A fast, dependency-light command-line tool, written in Go, that lists **trending
 
 ## Requirements
 
-- [Go](https://go.dev/dl/) **1.26** or newer (only needed to build from source)
+- [Go](https://go.dev/dl/) **1.25** or newer (only needed to build from source)
 - Internet access to `api.github.com`
 
 ## Installation
@@ -36,18 +36,16 @@ A fast, dependency-light command-line tool, written in Go, that lists **trending
 ### Option 1: `go install`
 
 ```bash
-go install github.com/kthesword/gh-trending-repos@latest
+go install github.com/kthesword/github-trending-repos@latest
 ```
 
-This puts a `gh-trending-repos` binary in `$(go env GOPATH)/bin`. Make sure that directory is on your `PATH`.
-
-> Tip: Because the binary name starts with `gh-`, you can also install it as a [GitHub CLI extension](https://cli.github.com/manual/gh_extension) and run it as `gh trending-repos`.
+This puts a `github-trending-repos` binary in `$(go env GOPATH)/bin`. Make sure that directory is on your `PATH`. To get the shorter `trending-repos` name, use Option 2 or download a release binary (Option 3).
 
 ### Option 2: Build from source
 
 ```bash
-git clone https://github.com/kthesword/gh-trending-repos.git
-cd gh-trending-repos
+git clone https://github.com/kthesword/github-trending-repos.git
+cd github-trending-repos
 go mod download
 ```
 
@@ -68,7 +66,7 @@ go build -o trending-repos.exe .
 ### Build with an embedded version
 
 ```bash
-go build -ldflags "-s -w -X github.com/kthesword/gh-trending-repos/cmd.version=v1.0.0" -o trending-repos .
+go build -ldflags "-s -w -X github.com/kthesword/github-trending-repos/cmd.version=v1.0.0" -o trending-repos .
 ./trending-repos --version
 ```
 
@@ -214,6 +212,39 @@ The tool treats **HTTP 429**, and **HTTP 403** with `X-RateLimit-Remaining: 0`, 
 - **Typed errors** in `api` let `cmd` choose a message with `errors.As` instead of matching strings.
 - **Alignment with colors:** `text/tabwriter` counts ANSI escape bytes as visible width, which breaks alignment once colors are added. The formatter pads the plain text first and then adds color.
 - **Testable root command:** `newRootCmd()` builds a fresh command each time, so tests don't share global Cobra state.
+
+## Deployment
+
+### Publish a release (prebuilt binaries)
+
+Pushing a version tag triggers [`release.yml`](.github/workflows/release.yml), which runs [GoReleaser](https://goreleaser.com) and publishes a GitHub Release with archives for Linux, macOS and Windows (amd64 and arm64) plus a `checksums.txt`.
+
+```bash
+git tag -a v1.0.0 -m "v1.0.0"
+git push origin v1.0.0
+```
+
+No secrets are needed; the workflow uses the built-in `GITHUB_TOKEN`. To try a release locally without publishing: `goreleaser release --snapshot --clean`.
+
+### Option 3: Download a release binary
+
+Grab the archive for your platform from the [Releases page](https://github.com/Kthesword/github-trending-repos/releases), extract it, and put `trending-repos` on your `PATH`.
+
+### Docker
+
+```bash
+docker build -t trending-repos .
+docker run --rm trending-repos --duration month --limit 20
+
+# with a token for higher rate limits
+docker run --rm -e GITHUB_TOKEN trending-repos -d day
+```
+
+The image is a static binary on `distroless`, runs as a non-root user, and has no shell.
+
+### Continuous integration
+
+[`ci.yml`](.github/workflows/ci.yml) runs on every push and pull request: gofmt, `go mod tidy` and `go vet` checks, tests on Linux, macOS and Windows (with the race detector on Linux), and a GoReleaser dry run.
 
 ## Development
 
