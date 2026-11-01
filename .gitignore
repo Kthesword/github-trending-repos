@@ -1,0 +1,18 @@
+# Binaries
+/trending-repos
+/trending-repos.exe
+/gh-trending-repos
+/gh-trending-repos.exe
+/dist/
+*.exe
+*.test
+
+# Coverage / profiling
+*.out
+coverage.*
+
+# Editors & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
