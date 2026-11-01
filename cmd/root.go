@@ -16,9 +16,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/kthesword/gh-trending-repos/api"
-	"github.com/kthesword/gh-trending-repos/formatter"
-	"github.com/kthesword/gh-trending-repos/models"
+	"github.com/kthesword/github-trending-repos/api"
+	"github.com/kthesword/github-trending-repos/formatter"
+	"github.com/kthesword/github-trending-repos/models"
 )
 
 const (
@@ -37,7 +37,7 @@ const (
 
 // version is injected at build time:
 //
-//	go build -ldflags "-X github.com/kthesword/gh-trending-repos/cmd.version=v1.0.0"
+//	go build -ldflags "-X github.com/kthesword/github-trending-repos/cmd.version=v1.0.0"
 var version = ""
 
 // options holds the parsed command-line flags.

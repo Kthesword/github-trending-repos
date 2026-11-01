@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kthesword/gh-trending-repos/models"
+	"github.com/kthesword/github-trending-repos/models"
 )
 
 const (

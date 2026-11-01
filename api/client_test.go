@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kthesword/gh-trending-repos/models"
+	"github.com/kthesword/github-trending-repos/models"
 )
 
 var testSince = time.Date(2026, 10, 25, 7, 2, 43, 0, time.UTC)

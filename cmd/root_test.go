@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kthesword/gh-trending-repos/api"
-	"github.com/kthesword/gh-trending-repos/models"
+	"github.com/kthesword/github-trending-repos/api"
+	"github.com/kthesword/github-trending-repos/models"
 )
 
 // execute runs a fresh root command with args and returns its output.

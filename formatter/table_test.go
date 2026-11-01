@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kthesword/gh-trending-repos/models"
+	"github.com/kthesword/github-trending-repos/models"
 )
 
 var testMeta = Meta{

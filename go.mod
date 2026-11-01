@@ -1,4 +1,4 @@
-module github.com/kthesword/gh-trending-repos
+module github.com/kthesword/github-trending-repos
 
 go 1.25.0
 

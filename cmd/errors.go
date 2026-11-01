@@ -13,7 +13,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/kthesword/gh-trending-repos/api"
+	"github.com/kthesword/github-trending-repos/api"
 )
 
 // Process exit codes.

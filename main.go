@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/kthesword/gh-trending-repos/cmd"
+	"github.com/kthesword/github-trending-repos/cmd"
 )
 
 func main() {

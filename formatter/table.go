@@ -12,7 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/fatih/color"
-	"github.com/kthesword/gh-trending-repos/models"
+	"github.com/kthesword/github-trending-repos/models"
 )
 
 const (

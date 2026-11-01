@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kthesword/gh-trending-repos/models"
+	"github.com/kthesword/github-trending-repos/models"
 )
 
 // RateLimitError is returned when GitHub refuses a request because a primary
