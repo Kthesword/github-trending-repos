@@ -1,0 +1,76 @@
+# GoReleaser configuration: https://goreleaser.com/customization/
+#
+# Triggered by .github/workflows/release.yml whenever a tag like v1.2.3 is
+# pushed. Produces cross-platform archives, checksums, and a GitHub Release.
+#
+# Validate locally with:  goreleaser check
+# Dry-run locally with:   goreleaser release --snapshot --clean
+version: 2
+
+project_name: trending-repos
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: trending-repos
+    main: .
+    binary: trending-repos
+    env:
+      - CGO_ENABLED=0 # fully static binaries, no libc dependency
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/kthesword/github-trending-repos/cmd.version={{ .Version }}
+    mod_timestamp: "{{ .CommitTimestamp }}" # reproducible builds
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Other changes
+      order: 999
+
+release:
+  github:
+    owner: Kthesword
+    name: github-trending-repos
+  draft: false
+  prerelease: auto # tags like v1.0.0-rc.1 are marked as pre-releases
