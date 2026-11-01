@@ -6,6 +6,8 @@
 
 **Repository:** <https://github.com/Kthesword/github-trending-repos>
 
+This is a solution to the [GitHub Trending CLI](https://roadmap.sh/projects/github-trending-cli) project from [roadmap.sh](https://roadmap.sh). Project page: <https://roadmap.sh/projects/github-trending-cli>
+
 A fast, dependency-light command-line tool, written in Go, that lists **trending public GitHub repositories** in your terminal. It uses the [GitHub REST Search API](https://docs.github.com/en/rest/search/search#search-repositories) and ranks results by star count.
 
 ```
