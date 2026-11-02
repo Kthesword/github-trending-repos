@@ -13,6 +13,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/kthesword/github-trending-repos/models"
+	"github.com/mattn/go-runewidth"
 )
 
 const (
@@ -29,6 +30,7 @@ const (
 // Meta carries contextual information displayed around the table.
 type Meta struct {
 	Period     string    // human-readable window, e.g. "past 7 days"
+	Language   string    // language filter in effect; empty means any language
 	Since      time.Time // start of the window
 	TotalCount int       // total matches reported by GitHub
 	Incomplete bool      // GitHub reported incomplete results
@@ -96,7 +98,11 @@ func (t *Table) Render(meta Meta, repos []models.Repository) error {
 	st := newStyles(t.useColor)
 
 	if len(repos) == 0 {
-		fmt.Fprintln(bw, st.warn.Sprintf("No repositories found that were created in the %s.", meta.Period))
+		scope := ""
+		if meta.Language != "" {
+			scope = " " + meta.Language
+		}
+		fmt.Fprintln(bw, st.warn.Sprintf("No%s repositories found that were created in the %s.", scope, meta.Period))
 		return bw.Flush()
 	}
 
@@ -105,10 +111,14 @@ func (t *Table) Render(meta Meta, repos []models.Repository) error {
 	w := measure(append([]row{header}, rows...))
 
 	// Title.
+	window := fmt.Sprintf("%s (since %s)", meta.Period, meta.Since.Local().Format("Jan 2, 2006 15:04"))
+	if meta.Language != "" {
+		window = sanitize(meta.Language) + " · " + window
+	}
 	fmt.Fprintf(bw, "\n%s%s  %s\n\n",
 		indent,
 		st.title.Sprint("Trending on GitHub"),
-		st.subtle.Sprintf("· %s (since %s)", meta.Period, meta.Since.Local().Format("Jan 2, 2006 15:04")),
+		st.subtle.Sprintf("· %s", window),
 	)
 
 	// Header + separator.
@@ -290,17 +300,19 @@ func sanitize(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
 
-// truncate shortens s to at most maxRunes characters, ending with an
-// ellipsis when text was removed.
-func truncate(s string, maxRunes int) string {
-	if maxRunes <= 0 || utf8.RuneCountInString(s) <= maxRunes {
+// truncate shortens s to at most maxWidth terminal cells, ending with an
+// ellipsis when text was removed. Width is measured in display cells, not
+// runes: CJK characters and emoji take two cells each.
+func truncate(s string, maxWidth int) string {
+	if maxWidth <= 0 || displayWidth(s) <= maxWidth {
 		return s
 	}
-	runes := []rune(s)
-	if maxRunes == 1 {
+	if maxWidth == 1 {
 		return ellipsis
 	}
-	return strings.TrimRight(string(runes[:maxRunes-1]), " ") + ellipsis
+	// Reserve one cell for the ellipsis.
+	cut := runewidth.Truncate(s, maxWidth-1, "")
+	return strings.TrimRight(cut, " ") + ellipsis
 }
 
 // formatCount renders an integer with thousands separators (e.g. 12,345).
@@ -329,7 +341,8 @@ func formatCount(n int) string {
 	return b.String()
 }
 
-func displayWidth(s string) int { return utf8.RuneCountInString(s) }
+// displayWidth returns how many terminal cells s occupies.
+func displayWidth(s string) int { return runewidth.StringWidth(s) }
 
 func padRight(s string, width int) string {
 	if gap := width - displayWidth(s); gap > 0 {
