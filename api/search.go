@@ -33,13 +33,39 @@ type SearchResult struct {
 	Repositories []models.Repository
 }
 
+// SearchOption customizes a trending search.
+type SearchOption func(*searchParams)
+
+type searchParams struct {
+	language string
+}
+
+// WithLanguage restricts results to repositories whose primary language is
+// language (e.g. "Go", "C++", "Jupyter Notebook"). GitHub matches language
+// names case-insensitively. An empty value applies no filter. The value
+// should already be validated with models.ParseLanguage.
+func WithLanguage(language string) SearchOption {
+	return func(p *searchParams) { p.language = language }
+}
+
 // BuildTrendingQuery returns the GitHub search query (the "q" parameter)
-// matching public repositories created at or after since.
+// matching public repositories created at or after since, narrowed by any
+// options such as WithLanguage.
 //
 // A full UTC timestamp is used instead of a bare date so that short windows
 // such as "day" are precise to the second.
-func BuildTrendingQuery(since time.Time) string {
-	return fmt.Sprintf("created:>=%s is:public", since.UTC().Format(time.RFC3339))
+func BuildTrendingQuery(since time.Time, opts ...SearchOption) string {
+	var p searchParams
+	for _, opt := range opts {
+		opt(&p)
+	}
+
+	q := fmt.Sprintf("created:>=%s is:public", since.UTC().Format(time.RFC3339))
+	if p.language != "" {
+		// Quoted so names containing spaces ("Jupyter Notebook") stay one term.
+		q += fmt.Sprintf(` language:"%s"`, p.language)
+	}
+	return q
 }
 
 // SearchTrending fetches up to limit public repositories created at or after
@@ -47,13 +73,13 @@ func BuildTrendingQuery(since time.Time) string {
 //
 // When limit exceeds MaxPerPage the results are fetched across multiple
 // pages. limit is clamped to MaxSearchResults, GitHub's own ceiling.
-func (c *Client) SearchTrending(ctx context.Context, since time.Time, limit int) (*SearchResult, error) {
+func (c *Client) SearchTrending(ctx context.Context, since time.Time, limit int, opts ...SearchOption) (*SearchResult, error) {
 	if limit < 1 {
 		return nil, fmt.Errorf("limit must be at least 1, got %d", limit)
 	}
 	limit = min(limit, MaxSearchResults)
 
-	query := BuildTrendingQuery(since)
+	query := BuildTrendingQuery(since, opts...)
 	perPage := min(limit, MaxPerPage)
 
 	result := &SearchResult{Repositories: make([]models.Repository, 0, limit)}

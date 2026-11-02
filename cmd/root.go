@@ -43,6 +43,7 @@ var version = ""
 // options holds the parsed command-line flags.
 type options struct {
 	duration string
+	language string
 	limit    int
 	timeout  time.Duration
 	noColor  bool
@@ -87,7 +88,10 @@ personal access token to raise that limit.`,
   trending-repos --duration month --limit 20
 
   # Today's hottest projects, without colors (handy for piping)
-  trending-repos -d day --no-color`,
+  trending-repos -d day --no-color
+
+  # Top 15 Go repositories created in the past month
+  trending-repos --language go --duration month --limit 15`,
 		Version:       resolveVersion(),
 		Args:          noPositionalArgs,
 		SilenceUsage:  true, // runtime errors shouldn't dump the usage text
@@ -102,6 +106,8 @@ personal access token to raise that limit.`,
 		fmt.Sprintf("time range to search (%s)", strings.Join(models.Periods(), ", ")))
 	flags.IntVarP(&opts.limit, "limit", "l", defaultLimit,
 		fmt.Sprintf("maximum number of repositories to display (1-%d)", api.MaxSearchResults))
+	flags.StringVarP(&opts.language, "language", "L", "",
+		`only show repositories whose primary language matches (e.g. go, python, "c++", "jupyter notebook")`)
 	flags.DurationVar(&opts.timeout, "timeout", defaultTimeout,
 		"timeout for each HTTP request to GitHub")
 	flags.BoolVar(&opts.noColor, "no-color", false,
@@ -128,6 +134,10 @@ func run(ctx context.Context, out io.Writer, opts *options) error {
 	if opts.limit < 1 || opts.limit > api.MaxSearchResults {
 		return usageErrorf("invalid limit %d: must be between 1 and %d", opts.limit, api.MaxSearchResults)
 	}
+	language, err := models.ParseLanguage(opts.language)
+	if err != nil {
+		return &usageError{err: err}
+	}
 	if opts.timeout <= 0 {
 		return usageErrorf("invalid timeout %s: must be greater than zero", opts.timeout)
 	}
@@ -141,7 +151,7 @@ func run(ctx context.Context, out io.Writer, opts *options) error {
 		api.WithHTTPClient(&http.Client{Timeout: opts.timeout}),
 	)
 
-	result, err := client.SearchTrending(ctx, since, opts.limit)
+	result, err := client.SearchTrending(ctx, since, opts.limit, api.WithLanguage(language))
 	if err != nil {
 		return err
 	}
@@ -149,6 +159,7 @@ func run(ctx context.Context, out io.Writer, opts *options) error {
 	table := formatter.NewTable(out, formatter.WithColor(!color.NoColor))
 	return table.Render(formatter.Meta{
 		Period:     period.Description(),
+		Language:   language,
 		Since:      since,
 		TotalCount: result.TotalCount,
 		Incomplete: result.Incomplete,
