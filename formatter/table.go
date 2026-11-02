@@ -80,6 +80,7 @@ func NewTable(w io.Writer, opts ...Option) *Table {
 // row holds the sanitized plain-text cells for one repository.
 type row struct {
 	rank, name, stars, language, description string
+	url                                      string // repository page; empty means "don't link"
 	noLanguage, noDescription                bool
 }
 
@@ -156,6 +157,11 @@ func (t *Table) buildRows(repos []models.Repository) []row {
 			language:    sanitize(repo.Language),
 			description: truncate(sanitize(repo.Description), t.maxDescWidth),
 		}
+		// Hyperlinks are escape sequences, so only emit them when we're
+		// writing to a terminal (the same condition that enables color).
+		if t.useColor {
+			r.url = safeURL(repo.HTMLURL)
+		}
 		if r.language == "" {
 			r.language, r.noLanguage = placeholder, true
 		}
@@ -173,15 +179,47 @@ type rowStyle struct {
 }
 
 // writeRow pads each cell to its column width and only then colors it.
+// The repository name is wrapped in a hyperlink when the row has a URL; its
+// padding is kept outside the link so alignment and underlines stay tidy.
 func writeRow(w io.Writer, cw widths, r row, rs rowStyle) {
+	name := paint(rs.name, hyperlink(r.url, r.name)) +
+		strings.Repeat(" ", max(0, cw.name-displayWidth(r.name)))
+
 	fmt.Fprint(w,
 		indent,
 		paint(rs.rank, padLeft(r.rank, cw.rank)), columnGap,
-		paint(rs.name, padRight(r.name, cw.name)), columnGap,
+		name, columnGap,
 		paint(rs.stars, padLeft(r.stars, cw.stars)), columnGap,
 		paint(rs.language, padRight(r.language, cw.language)), columnGap,
 		paint(rs.description, r.description), "\n",
 	)
+}
+
+// hyperlink wraps text in an OSC 8 terminal hyperlink so it is clickable in
+// terminals that support it (Windows Terminal, iTerm2, VS Code, GNOME
+// Terminal, kitty, ...). Terminals without support simply show the text.
+// An empty url returns text unchanged.
+func hyperlink(url, text string) string {
+	if url == "" {
+		return text
+	}
+	return "\x1b]8;;" + url + "\x1b\\" + text + "\x1b]8;;\x1b\\"
+}
+
+// safeURL returns raw only if it is a well-formed http(s) URL free of control
+// characters. The value comes from the API response, so it must not be able
+// to terminate the hyperlink sequence early and inject other escapes.
+func safeURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if !strings.HasPrefix(raw, "https://") && !strings.HasPrefix(raw, "http://") {
+		return ""
+	}
+	for _, r := range raw {
+		if unicode.IsControl(r) || unicode.IsSpace(r) {
+			return ""
+		}
+	}
+	return raw
 }
 
 // measure computes the widest cell in every padded column.
